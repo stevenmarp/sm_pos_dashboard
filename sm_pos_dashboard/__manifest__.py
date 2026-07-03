@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "POS Live Dashboard",
+    "name": "POS Dashboard | POS Live Dashboard",
     "version": "18.0.1.0.0",
     "category": "Point of Sale",
     "summary": "Realtime owner dashboard for all your points of sale: live revenue, orders, top products, payment mix on one screen",
@@ -33,6 +33,6 @@ One screen for the owner: what every point of sale is doing right now.
     "installable": True,
     "application": False,
     "auto_install": False,
-    "price": 49.00,
+    "price": 69.80,
     "currency": "USD",
 }

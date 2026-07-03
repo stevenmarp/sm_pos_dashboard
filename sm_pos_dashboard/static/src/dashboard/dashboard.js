@@ -3,11 +3,10 @@
 import {
     Component,
     onWillStart,
-    onMounted,
-    onPatched,
     onWillDestroy,
     useState,
     useRef,
+    useEffect,
 } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
@@ -40,12 +39,16 @@ export class SmPosDashboard extends Component {
         });
         this.busService.addChannel("sm_pos_dashboard");
         this.busService.subscribe("SM_POS_DASH_UPDATE", () => this.scheduleLoad());
-        onMounted(() => this.renderCharts());
-        onPatched(() => this.renderCharts());
+        useEffect(
+            () => {
+                this.renderCharts();
+                return () => this.destroyCharts();
+            },
+            () => [this.state.data, this.state.chartType, this.state.dark]
+        );
         onWillDestroy(() => {
             this.destroyed = true;
             clearTimeout(this.loadTimeout);
-            this.destroyCharts();
         });
     }
 
@@ -108,9 +111,19 @@ export class SmPosDashboard extends Component {
 
     destroyCharts() {
         for (const chart of Object.values(this.charts)) {
-            chart.destroy();
+            try {
+                chart.destroy();
+            } catch {
+                // canvas already gone
+            }
         }
         this.charts = {};
+        for (const ref of [this.revenueCanvas, this.paymentCanvas]) {
+            const stale = ref.el && window.Chart?.getChart(ref.el);
+            if (stale) {
+                stale.destroy();
+            }
+        }
     }
 
     renderCharts() {
@@ -118,6 +131,14 @@ export class SmPosDashboard extends Component {
         if (!d || !window.Chart) {
             return;
         }
+        try {
+            this._renderCharts(d);
+        } catch (error) {
+            console.error("sm_pos_dashboard chart error:", error);
+        }
+    }
+
+    _renderCharts(d) {
         this.destroyCharts();
         const ink = this.state.dark ? "#9ca3af" : "#6b7280";
         const grid = this.state.dark ? "#374151" : "#e5e7eb";
