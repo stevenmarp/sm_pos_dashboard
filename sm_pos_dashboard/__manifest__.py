@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "POS Live Dashboard",
-    "version": "18.0.1.0.0",
+    "version": "19.0.1.0.0",
     "category": "Point of Sale",
     "summary": "Realtime owner dashboard for all your points of sale: live revenue, orders, top products, payment mix on one screen",
     "description": """
