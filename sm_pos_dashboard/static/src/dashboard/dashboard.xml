@@ -2,115 +2,167 @@
 <templates xml:space="preserve">
 
     <t t-name="sm_pos_dashboard.Dashboard">
-        <div class="sm-dash h-100 overflow-auto p-3">
+        <div class="sm-dash h-100 overflow-auto p-3" t-att-class="{ 'sm-dash-dark': state.dark }">
             <t t-if="state.data">
-                <div class="d-flex align-items-baseline mb-3">
-                    <h2 class="mb-0 me-2">POS Live Dashboard</h2>
-                    <span class="text-muted" t-esc="state.data.date"/>
-                    <span class="sm-dash-live ms-3">LIVE</span>
-                </div>
-
-                <div class="sm-dash-tiles mb-4">
-                    <div class="sm-dash-tile">
-                        <div class="sm-dash-tile-label">Revenue Today</div>
-                        <div class="sm-dash-tile-value" t-esc="fmt(state.data.revenue)"/>
-                    </div>
-                    <div class="sm-dash-tile">
-                        <div class="sm-dash-tile-label">Orders</div>
-                        <div class="sm-dash-tile-value" t-esc="state.data.orders"/>
-                    </div>
-                    <div class="sm-dash-tile">
-                        <div class="sm-dash-tile-label">Average Ticket</div>
-                        <div class="sm-dash-tile-value" t-esc="fmt(state.data.avg_ticket)"/>
-                    </div>
-                    <div class="sm-dash-tile">
-                        <div class="sm-dash-tile-label">Open Sessions</div>
-                        <div class="sm-dash-tile-value" t-esc="state.data.open_sessions"/>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3 sm-dash-fade">
+                    <h2 class="mb-0 me-1 sm-dash-title">POS Live Dashboard</h2>
+                    <span class="sm-dash-live">
+                        <span class="sm-dash-live-dot"/> LIVE
+                    </span>
+                    <span class="sm-dash-muted ms-1" t-esc="state.data.date"/>
+                    <div class="ms-auto d-flex gap-2 align-items-center">
+                        <button t-foreach="['today', '7d', '30d']" t-as="p" t-key="p"
+                                class="sm-dash-filter text-uppercase"
+                                t-att-class="{ 'sm-active': state.period === p }"
+                                t-on-click="() => this.setPeriod(p)"
+                                t-esc="p === 'today' ? 'Today' : p"/>
+                        <button class="sm-dash-filter" t-on-click="toggleDark"
+                                t-att-title="state.dark ? 'Light mode' : 'Dark mode'">
+                            <i class="fa" t-att-class="state.dark ? 'fa-sun-o' : 'fa-moon-o'"/>
+                        </button>
                     </div>
                 </div>
 
-                <div class="sm-dash-card mb-4">
-                    <div class="sm-dash-card-title">Hourly Revenue</div>
-                    <div class="sm-dash-chart">
-                        <t t-foreach="state.data.hourly" t-as="value" t-key="value_index">
-                            <div class="sm-dash-col" t-att-title="value_index + ':00 - ' + fmt(value)">
-                                <span t-if="value_index === maxHourIndex and value gt 0"
-                                      class="sm-dash-col-label" t-esc="fmt(value)"/>
-                                <div class="sm-dash-bar"
-                                     t-attf-style="height: {{ Math.max(value / maxHourly * 140, value gt 0 ? 3 : 0) }}px"/>
-                                <div class="sm-dash-col-hour" t-esc="value_index"/>
+                <div class="sm-dash-tiles mb-3">
+                    <div class="sm-dash-tile sm-dash-fade">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="sm-dash-tile-label">Revenue</div>
+                                <div class="sm-dash-tile-value" t-esc="fmt(state.data.revenue)"/>
                             </div>
-                        </t>
+                            <div class="sm-dash-icon" style="background: rgba(102,126,234,0.15); color: #667eea;">
+                                <i class="fa fa-money"/>
+                            </div>
+                        </div>
+                        <div t-if="state.data.trend_revenue !== null" class="sm-dash-trend">
+                            <span t-att-class="trendClass(state.data.trend_revenue)"
+                                  t-esc="trendLabel(state.data.trend_revenue)"/>
+                            <span class="sm-dash-muted">vs previous period</span>
+                        </div>
+                    </div>
+                    <div class="sm-dash-tile sm-dash-fade">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="sm-dash-tile-label">Orders</div>
+                                <div class="sm-dash-tile-value" t-esc="state.data.orders"/>
+                            </div>
+                            <div class="sm-dash-icon" style="background: rgba(34,197,94,0.15); color: #22c55e;">
+                                <i class="fa fa-shopping-bag"/>
+                            </div>
+                        </div>
+                        <div t-if="state.data.trend_orders !== null" class="sm-dash-trend">
+                            <span t-att-class="trendClass(state.data.trend_orders)"
+                                  t-esc="trendLabel(state.data.trend_orders)"/>
+                            <span class="sm-dash-muted">vs previous period</span>
+                        </div>
+                    </div>
+                    <div class="sm-dash-tile sm-dash-fade">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="sm-dash-tile-label">Average Ticket</div>
+                                <div class="sm-dash-tile-value" t-esc="fmt(state.data.avg_ticket)"/>
+                            </div>
+                            <div class="sm-dash-icon" style="background: rgba(245,158,11,0.15); color: #f59e0b;">
+                                <i class="fa fa-tag"/>
+                            </div>
+                        </div>
+                        <div t-if="state.data.trend_avg !== null" class="sm-dash-trend">
+                            <span t-att-class="trendClass(state.data.trend_avg)"
+                                  t-esc="trendLabel(state.data.trend_avg)"/>
+                            <span class="sm-dash-muted">vs previous period</span>
+                        </div>
+                    </div>
+                    <div class="sm-dash-tile sm-dash-fade">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="sm-dash-tile-label">Open Sessions</div>
+                                <div class="sm-dash-tile-value" t-esc="state.data.open_sessions"/>
+                            </div>
+                            <div class="sm-dash-icon" style="background: rgba(236,72,153,0.15); color: #ec4899;">
+                                <i class="fa fa-desktop"/>
+                            </div>
+                        </div>
+                        <div class="sm-dash-trend">
+                            <span class="sm-dash-muted">registers open right now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sm-dash-main mb-3">
+                    <div class="sm-dash-card sm-dash-fade">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="sm-dash-card-title mb-0">
+                                Revenue <span class="sm-dash-muted" t-esc="state.period === 'today' ? 'per hour' : 'per day'"/>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button class="sm-dash-filter sm-dash-filter-sm"
+                                        t-att-class="{ 'sm-active': state.chartType === 'bar' }"
+                                        t-on-click="() => this.setChartType('bar')">Bar</button>
+                                <button class="sm-dash-filter sm-dash-filter-sm"
+                                        t-att-class="{ 'sm-active': state.chartType === 'line' }"
+                                        t-on-click="() => this.setChartType('line')">Line</button>
+                            </div>
+                        </div>
+                        <div style="height: 260px;">
+                            <canvas t-ref="revenueCanvas"/>
+                        </div>
+                    </div>
+                    <div class="sm-dash-card sm-dash-fade">
+                        <div class="sm-dash-card-title">Payment Methods</div>
+                        <div style="height: 260px;">
+                            <canvas t-ref="paymentCanvas"/>
+                        </div>
+                        <div t-if="!state.data.payments.length" class="sm-dash-muted">No payments in this period</div>
                     </div>
                 </div>
 
                 <div class="sm-dash-grid">
-                    <div class="sm-dash-card">
+                    <div class="sm-dash-card sm-dash-fade">
                         <div class="sm-dash-card-title">Per Point of Sale</div>
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>POS</th>
-                                    <th class="text-end">Orders</th>
-                                    <th class="text-end">Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="state.data.per_config" t-as="cfg" t-key="cfg.name">
-                                    <td t-esc="cfg.name"/>
-                                    <td class="text-end" t-esc="cfg.orders"/>
-                                    <td class="text-end" t-esc="fmt(cfg.revenue)"/>
-                                </tr>
-                                <tr t-if="!state.data.per_config.length">
-                                    <td colspan="3" class="text-muted">No sales yet today</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div t-foreach="state.data.per_config" t-as="cfg" t-key="cfg.name"
+                             class="sm-dash-row" t-att-title="fmt(cfg.revenue)">
+                            <div class="sm-dash-row-head">
+                                <span class="text-truncate">
+                                    <t t-esc="cfg.name"/>
+                                    <span class="sm-dash-muted ms-1" t-esc="'(' + cfg.orders + ')'"/>
+                                </span>
+                                <span class="fw-bold ms-2" t-esc="fmt(cfg.revenue)"/>
+                            </div>
+                            <div class="sm-dash-row-track">
+                                <div class="sm-dash-row-fill"
+                                     t-attf-style="width: {{ cfg.revenue / maxConfigRevenue * 100 }}%"/>
+                            </div>
+                        </div>
+                        <div t-if="!state.data.per_config.length" class="sm-dash-muted">No sales in this period</div>
                     </div>
 
-                    <div class="sm-dash-card">
+                    <div class="sm-dash-card sm-dash-fade">
                         <div class="sm-dash-card-title">Top Products</div>
                         <div t-foreach="state.data.top_products" t-as="product" t-key="product.name"
                              class="sm-dash-row" t-att-title="fmt(product.revenue)">
                             <div class="sm-dash-row-head">
                                 <span class="text-truncate" t-esc="product.name"/>
-                                <span class="text-muted ms-2" t-esc="product.qty"/>
+                                <span class="sm-dash-muted ms-2" t-esc="product.qty"/>
                             </div>
                             <div class="sm-dash-row-track">
                                 <div class="sm-dash-row-fill"
                                      t-attf-style="width: {{ product.revenue / maxProductRevenue * 100 }}%"/>
                             </div>
                         </div>
-                        <div t-if="!state.data.top_products.length" class="text-muted">No sales yet today</div>
+                        <div t-if="!state.data.top_products.length" class="sm-dash-muted">No sales in this period</div>
                     </div>
 
-                    <div class="sm-dash-card">
-                        <div class="sm-dash-card-title">Payment Methods</div>
-                        <div t-foreach="state.data.payments" t-as="pm" t-key="pm.name"
-                             class="sm-dash-row" t-att-title="fmt(pm.amount)">
-                            <div class="sm-dash-row-head">
-                                <span t-esc="pm.name"/>
-                                <span class="text-muted ms-2" t-esc="fmt(pm.amount)"/>
-                            </div>
-                            <div class="sm-dash-row-track">
-                                <div class="sm-dash-row-fill"
-                                     t-attf-style="width: {{ pm.amount / totalPayments * 100 }}%"/>
-                            </div>
-                        </div>
-                        <div t-if="!state.data.payments.length" class="text-muted">No payments yet today</div>
-                    </div>
-
-                    <div class="sm-dash-card">
+                    <div class="sm-dash-card sm-dash-fade">
                         <div class="sm-dash-card-title">Recent Orders</div>
-                        <table class="table table-sm mb-0">
+                        <table class="table table-sm sm-dash-table mb-0">
                             <tbody>
                                 <tr t-foreach="state.data.recent" t-as="order" t-key="order_index">
-                                    <td class="text-muted" t-esc="order.time"/>
+                                    <td class="sm-dash-muted" t-esc="order.time"/>
                                     <td t-esc="order.config"/>
-                                    <td class="text-end" t-esc="fmt(order.amount)"/>
+                                    <td class="text-end fw-bold" t-esc="fmt(order.amount)"/>
                                 </tr>
                                 <tr t-if="!state.data.recent.length">
-                                    <td class="text-muted">No orders yet today</td>
+                                    <td class="sm-dash-muted">No orders in this period</td>
                                 </tr>
                             </tbody>
                         </table>
