@@ -21,6 +21,7 @@ One screen for the owner: what every point of sale is doing right now.
     "author": "Steven Marp",
     "website": "https://apps.odoo.com/apps/modules/browse?author=Steven Marp",
     "license": "OPL-1",
+    "images": ["static/description/banner.gif"],
     "depends": ["point_of_sale"],
     "data": [
         "views/dashboard_views.xml",
